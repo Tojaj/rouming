@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android" >
+
+    <PreferenceCategory android:title="@string/category_title_update_preferences" >
+        <CheckBoxPreference
+            android:key="background_update"
+            android:title="@string/background_update_title"
+            android:summary="@string/background_update_summary"
+            android:defaultValue="true" />
+
+        <ListPreference
+            android:key="background_update_preference"
+            android:title="@string/background_update_preference_title"
+            android:summary="@string/backgroud_update_preference_summary"
+            android:dependency="background_update"
+            android:dialogTitle="@string/background_update_preference_title"
+            android:entries="@array/backgroud_update_options"
+            android:entryValues="@array/backgroud_update_option_values"
+            android:layout="?android:attr/preferenceLayoutChild"
+            android:defaultValue="UPDATE_WIFI_ONLY"/>
+
+        <ListPreference
+            android:key="background_update_frequency_preference"
+            android:title="@string/background_update_frequency_preference_title"
+            android:summary="@string/background_update_frequency_preference_summary"
+            android:dependency="background_update"
+            android:dialogTitle= "background_update_frequency_preference_dialogtitle"
+            android:entries="@array/backgroud_update_frequency_options"
+            android:entryValues="@array/backgroud_update_frequency_option_values"
+            android:layout="?android:attr/preferenceLayoutChild"
+            android:defaultValue="INTERVAL_HALF_DAY" />
+    </PreferenceCategory>
+
+    <PreferenceCategory android:title="@string/category_title_cache" >
+        <EditTextPreference
+            android:key="cache_size_preference"
+            android:title="@string/cache_size_title"
+            android:summary="@string/cache_size_summary"
+            android:inputType="number"
+            android:layout="?android:attr/preferenceLayoutChild"
+            android:defaultValue="100"/>
+		<Preference
+            android:key="clear_cache_button"
+            android:title="@string/clear_cache_title"
+            android:summary="@string/clear_cache_summary"/>
+    </PreferenceCategory>
+    
+    <PreferenceCategory android:title="@string/about" >
+        <PreferenceScreen
+            android:title="@string/author_homepage_title"
+            android:summary="@string/author_homepage_title" >
+            <intent
+                android:action="android.intent.action.VIEW"
+                android:data="http://tojaj.com" />
+        </PreferenceScreen>
+    </PreferenceCategory>
+
+</PreferenceScreen>

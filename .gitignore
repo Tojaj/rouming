@@ -18,3 +18,10 @@ local.properties
 # Eclipse project files
 .classpath
 .project
+
+#
+.settings/
+
+# Auto generated files
+proguard-project.txt
+project.properties

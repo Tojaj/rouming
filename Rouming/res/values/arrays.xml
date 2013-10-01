@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    
+    <!-- Used in preferences -->
+    
+    <string-array name="backgroud_update_options">
+        <item>Vždy</item>
+        <item>Jen na Wifi</item>
+    </string-array>
+
+    <string-array name="backgroud_update_option_values">
+        <item>UPDATE_ALWAYS</item>
+        <item>UPDATE_WIFI_ONLY</item>
+    </string-array>
+    
+    <string-array name="backgroud_update_frequency_options">
+        <item>Čtvrt hodina</item>
+        <item>Půl hodina</item>
+        <item>1 hodina</item>
+        <item>12 hodin</item>
+        <item>24 hodin</item>
+    </string-array>
+
+    <string-array name="backgroud_update_frequency_option_values">
+        <item>INTERVAL_FIFTEEN_MINUTES</item>
+        <item>INTERVAL_HALF_HOUR</item>
+        <item>INTERVAL_HOUR</item>
+        <item>INTERVAL_HALF_DAY</item>
+        <item>INTERVAL_DAY</item>
+    </string-array>
+</resources>

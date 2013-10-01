@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="app_name">Rouming</string>
+    <string name="no_network_connection_available">Není dostupné připojení k síti</string>
+    <string name="picture_from_rouming">Obrázek z Roumingu</string>
+    <string name="title_activity_picture">PictureActivity</string>
+	<string name="no_image_available">"Obrázek není dostupný v cache"</string>
+	<string name="drawer_open">Otevřít navigační menu</string>
+    <string name="drawer_close">Zavřít navigační menu</string>
+    <string name="cache_cleared">Cache vymazána</string>
+   
+    <!-- Action bar + menu -->
+    <string name="action_settings">Nastavení</string>
+    <string name="action_refresh">Aktualizovat</string>
+    
+    <!-- Fragment names (titles) -->
+    <string name="fragment_pictures">Obrázky</string>
+    <string name="fragment_preference">Nastavení</string>
+    
+    <!--  Preferences -->
+    <string name="category_title_update_preferences">Nastavení aktualizací</string>
+    <string name="background_update_title">Automatická aktualizace</string>
+    <string name="background_update_summary">Nastavení automatické aktualizace obsahu na pozadí</string>
+    <string name="background_update_preference_title">Nastavení aktualizací na pozadí</string>
+    <string name="backgroud_update_preference_summary">Kdy aktualizovat</string>
+    <string name="background_update_frequency_preference_title">Interval aktualizací</string>
+    <string name="background_update_frequency_preference_summary">Počet hodin mezi jednotlivými aktualizacemi</string>
+    <string name="background_update_frequency_preference_dialogtitle">Interval aktualizací</string>
+    <string name="category_title_cache">Cache</string>
+    <string name="cache_size_title">Velikost obrázkové cache</string>
+    <string name="cache_size_summary">Počet obrázků uložených v cache</string>
+    <string name="clear_cache_title">Vymazat cache</string>
+    <string name="clear_cache_summary">Vymazat obrázky uložené v cache</string>
+    <string name="about">O programu</string>
+    <string name="author_homepage_title">Domovská stránka autora</string>
+    
+</resources>
