@@ -26,36 +26,35 @@ import android.content.Loader;
 import android.widget.CursorAdapter;
 
 public class PicturesFragment extends ListFragment implements
-		LoaderManager.LoaderCallbacks<Cursor> {
+        LoaderManager.LoaderCallbacks<Cursor> {
 
-	static final String TAG = "PicturesFragment";
-	private static final int PICTURES_LOADER = 0;
-	
-	OnPictureClickedListener listener;
-	RoumingPicturesCursorAdapter mAdapter;
-	protected ImageLoader imageLoader = ImageLoader.getInstance();
+    static final String TAG = "PicturesFragment";
+    private static final int PICTURES_LOADER = 0;
 
-	
-	/*
-	 * Interface(s) required by this activity
-	 */
-	
+    OnPictureClickedListener listener;
+    RoumingPicturesCursorAdapter mAdapter;
+    protected ImageLoader imageLoader = ImageLoader.getInstance();
+
+    /*
+     * Interface(s) required by this activity
+     */
+
     public static interface OnPictureClickedListener {
-        public void OnPictureClicked(String local_uri, String origin_uri, String name);
+        public void OnPictureClicked(String local_uri, String origin_uri,
+                String name);
     }
 
-   
     public static PicturesFragment newInstance() {
-    	PicturesFragment f = new PicturesFragment();
+        PicturesFragment f = new PicturesFragment();
         Bundle args = new Bundle();
         f.setArguments(args);
         return f;
     }
-    
+
     /*
      * Fragment default callbacks
      */
-    
+
     @Override
     public void onAttach(Activity activity) {
         super.onAttach(activity);
@@ -70,155 +69,158 @@ public class PicturesFragment extends ListFragment implements
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        
+
         // Retain this fragment across configuration changes.
         setRetainInstance(true);
-        
+
         // Set own cursor and own adapter
-    	mAdapter = new RoumingPicturesCursorAdapter(getActivity(), null);
-    	setListAdapter(mAdapter);
-    	getLoaderManager().initLoader(PICTURES_LOADER, null, this);
+        mAdapter = new RoumingPicturesCursorAdapter(getActivity(), null);
+        setListAdapter(mAdapter);
+        getLoaderManager().initLoader(PICTURES_LOADER, null, this);
     }
-    
+
     @Override
     public void onListItemClick(ListView l, View v, int position, long id) {
-		Cursor c = mAdapter.getCursor();
-		if (c == null)
-			return;
-		
-		c.moveToPosition(position);
-		
-		String local_uri = null;
-		String origin_uri = c.getString(c.getColumnIndex(RoumingContract.Pictures.PICTURE_URL));
-		String name = c.getString(c.getColumnIndex(RoumingContract.Pictures.NAME));
-		
-		if (origin_uri != null) {
-			DiscCacheAware discCache = imageLoader.getDiscCache();
-			File image = DiscCacheUtil.findInCache(origin_uri, discCache);
-			if (image != null)
-				local_uri = Uri.fromFile(image).toString();
-		}
-		
+        Cursor c = mAdapter.getCursor();
+        if (c == null)
+            return;
+
+        c.moveToPosition(position);
+
+        String local_uri = null;
+        String origin_uri = c.getString(c
+                .getColumnIndex(RoumingContract.Pictures.PICTURE_URL));
+        String name = c.getString(c
+                .getColumnIndex(RoumingContract.Pictures.NAME));
+
+        if (origin_uri != null) {
+            DiscCacheAware discCache = imageLoader.getDiscCache();
+            File image = DiscCacheUtil.findInCache(origin_uri, discCache);
+            if (image != null)
+                local_uri = Uri.fromFile(image).toString();
+        }
+
         listener.OnPictureClicked(local_uri, origin_uri, name);
     }
 
-    
-	/*
-	 * Custom cursor adapter with view recycling
-	 */
-	
-	public class RoumingPicturesCursorAdapter extends CursorAdapter {
-		
-		Context context;
+    /*
+     * Custom cursor adapter with view recycling
+     */
 
-		private class ViewHolder {
-			public TextView textViewName;
-			public ImageView imageView;
-		}
-		
-		public RoumingPicturesCursorAdapter(Context context, Cursor c) {
-			super(context, c, false);
-			this.context = context;
-		}
+    public class RoumingPicturesCursorAdapter extends CursorAdapter {
 
-		@Override
-		public View getView(int position, View convertView, ViewGroup parent) {
-			View view = convertView;
-			final ViewHolder holder;
+        Context context;
 
-			if (convertView == null) {
-			    LayoutInflater inflater = LayoutInflater.from(context);
-			    view = inflater.inflate(R.layout.obrazek_item, parent, false);
-				
-				holder = new ViewHolder();
-				holder.textViewName = (TextView) view.findViewById(R.id.textViewName);
-				holder.imageView = (ImageView) view.findViewById(R.id.imageView);
-				view.setTag(holder);
-			} else {
-				holder = (ViewHolder) view.getTag();
-			}
+        private class ViewHolder {
+            public TextView textViewName;
+            public ImageView imageView;
+        }
 
-			final Cursor cursor = (Cursor)getItem(position);
-			
-			holder.textViewName.setText(cursor.getString(cursor.getColumnIndex(RoumingContract.Pictures.NAME)));
-			imageLoader.displayImage(cursor.getString(cursor.getColumnIndex(RoumingContract.Pictures.PICTURE_URL)), holder.imageView);
-			
-			/*
-			imageLoader.loadImage(rouming_picture_href.pic_url.toString(), new SimpleImageLoadingListener() {
-			    @Override
-			    public void onLoadingComplete(String imageUri, View view, Bitmap loadedImage) {
-			        // Do whatever you want with Bitmap
-			    	holder.imageView.setImageBitmap(loadedImage);
-			    }
-			});
-			*/
-			
-			return view;
-		}
-		
-		@Override
-		public View newView(Context context, Cursor cursor, ViewGroup parent) { 
-	        return null;
-		}
-		
-		@Override
-		public void bindView(View view, Context context, Cursor cursor) {}
-	}
-    
-	
-	/*
-	 * Loader interface implementation
-	 */
-    
-	@Override
-	public Loader<Cursor> onCreateLoader(int loaderID, Bundle bundle) {
-		Log.d(TAG, "Loader created");
-		switch (loaderID) {
-		case PICTURES_LOADER:
-			// Return a new CursorLoader
-			String[] projection = {
-					RoumingContract.Pictures._ID,
-					RoumingContract.Pictures.TIME,
-					RoumingContract.Pictures.NAME,
-					RoumingContract.Pictures.DETAIL_URL,
-					RoumingContract.Pictures.PICTURE_URL,
-					RoumingContract.Pictures.SIZE,
-					RoumingContract.Pictures.LIKES,
-					RoumingContract.Pictures.DISLIKES,
-					RoumingContract.Pictures.COMMENTS
-			};
-		
-			return new CursorLoader(getActivity(),
-					RoumingContract.Pictures.CONTENT_URI, // Table to query
-					projection,	// Projection to return
-					null, 		// No selection clause
-					null, 		// No selection arguments
-					null 		// Default sort order
-			);
-		default:
-			// An invalid id was passed in
-			return null;
-		}
-	}
+        public RoumingPicturesCursorAdapter(Context context, Cursor c) {
+            super(context, c, false);
+            this.context = context;
+        }
 
-	@Override
-	public void onLoadFinished(Loader<Cursor> loader, Cursor cursor) {
-	    /*
-	     * Moves the query results into the adapter, causing the
-	     * ListView fronting this adapter to re-display
-	     */
-		Log.d(TAG, "LOADER Finished");
-		mAdapter.changeCursor(cursor);
-	}
+        @Override
+        public View getView(int position, View convertView, ViewGroup parent) {
+            View view = convertView;
+            final ViewHolder holder;
 
-	@Override
-	public void onLoaderReset(Loader<Cursor> loader) {
-	    /*
-	     * Clears out the adapter's reference to the Cursor.
-	     * This prevents memory leaks.
-	     */
-		Log.d(TAG, "LOADER Reseted");
-	    mAdapter.changeCursor(null);
-	}
-	
+            if (convertView == null) {
+                LayoutInflater inflater = LayoutInflater.from(context);
+                view = inflater.inflate(R.layout.obrazek_item, parent, false);
+
+                holder = new ViewHolder();
+                holder.textViewName = (TextView) view
+                        .findViewById(R.id.textViewName);
+                holder.imageView = (ImageView) view
+                        .findViewById(R.id.imageView);
+                view.setTag(holder);
+            } else {
+                holder = (ViewHolder) view.getTag();
+            }
+
+            final Cursor cursor = (Cursor) getItem(position);
+
+            holder.textViewName.setText(cursor.getString(cursor
+                    .getColumnIndex(RoumingContract.Pictures.NAME)));
+            imageLoader.displayImage(cursor.getString(cursor
+                    .getColumnIndex(RoumingContract.Pictures.PICTURE_URL)),
+                    holder.imageView);
+
+            /*
+             * imageLoader.loadImage(rouming_picture_href.pic_url.toString(),
+             * new SimpleImageLoadingListener() {
+             * 
+             * @Override public void onLoadingComplete(String imageUri, View
+             * view, Bitmap loadedImage) { // Do whatever you want with Bitmap
+             * holder.imageView.setImageBitmap(loadedImage); } });
+             */
+
+            return view;
+        }
+
+        @Override
+        public View newView(Context context, Cursor cursor, ViewGroup parent) {
+            return null;
+        }
+
+        @Override
+        public void bindView(View view, Context context, Cursor cursor) {
+        }
+    }
+
+    /*
+     * Loader interface implementation
+     */
+
+    @Override
+    public Loader<Cursor> onCreateLoader(int loaderID, Bundle bundle) {
+        Log.d(TAG, "Loader created");
+        switch (loaderID) {
+        case PICTURES_LOADER:
+            // Return a new CursorLoader
+            String[] projection = { RoumingContract.Pictures._ID,
+                    RoumingContract.Pictures.TIME,
+                    RoumingContract.Pictures.NAME,
+                    RoumingContract.Pictures.DETAIL_URL,
+                    RoumingContract.Pictures.PICTURE_URL,
+                    RoumingContract.Pictures.SIZE,
+                    RoumingContract.Pictures.LIKES,
+                    RoumingContract.Pictures.DISLIKES,
+                    RoumingContract.Pictures.COMMENTS };
+
+            return new CursorLoader(getActivity(),
+                    RoumingContract.Pictures.CONTENT_URI, // Table to query
+                    projection, // Projection to return
+                    null, // No selection clause
+                    null, // No selection arguments
+                    null // Default sort order
+            );
+        default:
+            // An invalid id was passed in
+            return null;
+        }
+    }
+
+    @Override
+    public void onLoadFinished(Loader<Cursor> loader, Cursor cursor) {
+        /*
+         * Moves the query results into the adapter, causing the ListView
+         * fronting this adapter to re-display
+         */
+        Log.d(TAG, "LOADER Finished");
+        mAdapter.changeCursor(cursor);
+    }
+
+    @Override
+    public void onLoaderReset(Loader<Cursor> loader) {
+        /*
+         * Clears out the adapter's reference to the Cursor. This prevents
+         * memory leaks.
+         */
+        Log.d(TAG, "LOADER Reseted");
+        mAdapter.changeCursor(null);
+    }
+
 }
