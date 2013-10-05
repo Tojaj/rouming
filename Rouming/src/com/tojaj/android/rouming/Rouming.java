@@ -41,6 +41,16 @@ public class Rouming {
         public URL pic_url;
     }
 
+    public static class RoumingJoke {
+        public String time;
+        public long unixtime;
+        public String name;
+        public String text;
+        public String rating;
+        public int grade;
+        public String category;
+    }
+
     // Helpers
 
     public static String stringCleanup(String str) {
@@ -118,7 +128,7 @@ public class Rouming {
 
     public static ArrayList<RoumingPictureHref> getRoumingPictureHrefs(
             Context context) {
-        String content = getRoumingPageContent(context);
+        String content = getRoumingPageContent(context, RoumingConf.ROUMING_URL);
         ArrayList<RoumingPictureHref> list = parseRoumingHtml(content);
         return list;
     }
@@ -177,12 +187,12 @@ public class Rouming {
         return content;
     }
 
-    public static String getRoumingPageContent(Context context) {
+    public static String getRoumingPageContent(Context context, String pageUrl) {
         String content = null;
 
         URL url;
         try {
-            url = new URL(RoumingConf.ROUMING_URL);
+            url = new URL(pageUrl);
         } catch (MalformedURLException e) {
             Log.e(TAG, "Cannot parse URL: " + RoumingConf.ROUMING_URL);
             return null;
@@ -224,7 +234,7 @@ public class Rouming {
             String p_url = m.group(6);
             String p_name = m.group(7);
 
-            Log.d(TAG, "Item:" +
+            Log.d(TAG, "Picture href:" +
                        "\nName: " + p_name +
                        "\nURL: " + p_url +
                        "\nTime: " + p_time +
@@ -245,6 +255,60 @@ public class Rouming {
             pic_href.pic_url = toPicUrl(stringCleanup(p_url));
 
             list.add(pic_href);
+        }
+
+        return list;
+    }
+
+    public static ArrayList<RoumingJoke> parseRoumingJokesHtml(String content) {
+
+        ArrayList<RoumingJoke> list = new ArrayList<RoumingJoke>();
+
+        // Get the main page
+        if (content == null)
+            return list;
+
+        // Parse content
+
+        // Regexp created with: http://myregexp.com/signedJar.html
+        // Note: Watch out need to use double escape backslashes in java string!
+
+        Pattern p = Pattern.compile(
+                "<tr\\s+class=\"roumingForum\">.*?" +
+                "<a\\s+href=\"\\?id=[0-9]+\\#[0-9]+\">\\s*<strong\\s+title=\"[^\"]+\">([^<]+)</strong>\\s*</a>.*?" +
+                "\\(([0-9]+\\.[0-9]+\\.[0-9]+\\s+[0-9]+:[0-9]+)\\).*?" +
+                "width=\"80\">([^<]+)</td>.*?" +
+                "alt=\"Známka:\\s+([0-9])\".*?" +
+                "<td\\s+class=\"roumingForumMessage\"\\s+colspan=\"4\">(.*?)</td>",
+                Pattern.MULTILINE + Pattern.CASE_INSENSITIVE
+                        + Pattern.DOTALL + Pattern.COMMENTS);
+
+        Matcher m = p.matcher(content);
+
+        while (m.find()) { // Find each match in turn; String can't do this.
+            String p_name = m.group(1);
+            String p_time = m.group(2);
+            String p_category = m.group(3);
+            String p_rating = m.group(4);
+            String p_text = m.group(5);
+
+            Log.d(TAG, "Joke:" +
+                       "\nName: " + p_name +
+                       "\nTime: " + p_time +
+                       "\nCategory: " + p_category +
+                       "\nRating: " + p_rating +
+                       "\nText: " + p_text);
+
+            RoumingJoke joke = new RoumingJoke();
+            joke.name = stringCleanup(p_name);
+            joke.text = stringCleanup(p_text);
+            joke.time = stringCleanup(p_time);
+            joke.unixtime = toUnixTime(stringCleanup(p_time));
+            joke.rating = stringCleanup(p_rating);
+            //joke.grade = toGrade(stringCleanup(p_rating));
+            joke.category = stringCleanup(p_category);
+
+            list.add(joke);
         }
 
         return list;

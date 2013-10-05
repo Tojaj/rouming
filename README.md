@@ -12,3 +12,12 @@ Android aplication to display content from the Rouming.cz website.
 ## Other third party content
 
 * [Glossy smiley with glasses](http://iconbug.com/detail/icon/2841/glossy-smiley-with-glasses/)
+
+## How to import and setup unittests in Eclipse
+
+* Import ``RoumingTest`` into the Eclipse
+* Go to Project -> Properties -> Java Build Path
+* Select tab ``Projects``
+* Click ``Add ...`` button
+* Select ``Rouming`` project
+
