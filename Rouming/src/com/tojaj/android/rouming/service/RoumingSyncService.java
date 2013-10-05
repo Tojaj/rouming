@@ -6,14 +6,9 @@ import java.util.Date;
 import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 
-import com.tojaj.android.rouming.Rouming;
-import com.tojaj.android.rouming.Rouming.RoumingPictureHref;
-import com.tojaj.android.rouming.provider.RoumingContract;
-import com.tojaj.android.rouming.provider.RoumingContract.Metadata;
-import com.tojaj.android.rouming.provider.RoumingContract.Pictures;
-
 import android.app.AlarmManager;
 import android.app.IntentService;
+import android.app.PendingIntent;
 import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Context;
@@ -26,7 +21,13 @@ import android.net.Uri;
 import android.os.AsyncTask;
 import android.preference.PreferenceManager;
 import android.util.Log;
-import android.app.PendingIntent;
+
+import com.tojaj.android.rouming.Rouming;
+import com.tojaj.android.rouming.Rouming.RoumingJoke;
+import com.tojaj.android.rouming.Rouming.RoumingPictureHref;
+import com.tojaj.android.rouming.provider.RoumingContract;
+import com.tojaj.android.rouming.provider.RoumingContract.Metadata;
+import com.tojaj.android.rouming.provider.RoumingContract.Pictures;
 
 public class RoumingSyncService extends IntentService {
 
@@ -135,7 +136,7 @@ public class RoumingSyncService extends IntentService {
         }
 
         // Do update
-        new DownloadAndParseRoumingTask(this).execute(this);
+        new UpdateTask(this).execute(this);
     }
 
     /*
@@ -202,14 +203,17 @@ public class RoumingSyncService extends IntentService {
      * Async task
      */
 
-    public class DownloadAndParseRoumingTask extends
-            AsyncTask<Context, Void, ArrayList<RoumingPictureHref>> {
+    public class UpdateTask extends
+            AsyncTask<Context, Void, Void> {
 
         Context mContext;
         public boolean mOnline;
         long mUpdateStartTime;
 
-        public DownloadAndParseRoumingTask(Context ctx) {
+        private ArrayList<RoumingPictureHref> mRoumingPictureHrefs;
+        private ArrayList<RoumingJoke> mRoumingJokes;
+
+        public UpdateTask(Context ctx) {
             // Now set context
             mContext = ctx;
         }
@@ -220,16 +224,35 @@ public class RoumingSyncService extends IntentService {
         }
 
         @Override
-        protected ArrayList<RoumingPictureHref> doInBackground(
+        protected Void doInBackground(
                 Context... contexts) {
-            return Rouming.getRoumingPictureHrefs(contexts[0]);
+            mRoumingPictureHrefs = Rouming.getRoumingPictureHrefs(contexts[0]);
+            mRoumingJokes = new ArrayList<RoumingJoke>();
+
+            for (int x = 1; x < 4; x++) {
+                ArrayList<RoumingJoke> jokes;
+                jokes = Rouming.getRoumingJokes(contexts[0], x);
+                if (jokes != null) {
+                    mRoumingJokes.addAll(jokes);
+                } else {
+                    Log.e(TAG, "Cannot get rouming jokes for page " + String.valueOf(x));
+                    break;
+                }
+            }
+
+            return null;
         }
 
         @Override
-        protected void onPostExecute(ArrayList<RoumingPictureHref> plist) {
-            ArrayList<ContentValues> values = new ArrayList<ContentValues>();
+        protected void onPostExecute(Void none) {
+            boolean status = true;
+            ArrayList<ContentValues> values;
+            ContentResolver resolver = getContentResolver();
 
-            for (RoumingPictureHref href : plist) {
+            // Rouming pictures
+
+            values = new ArrayList<ContentValues>();
+            for (RoumingPictureHref href : mRoumingPictureHrefs) {
                 Log.d(TAG, "Url: " + href.pic_url);
                 ContentValues newValues = new ContentValues();
 
@@ -246,14 +269,20 @@ public class RoumingSyncService extends IntentService {
             }
 
             if (values.size() > 0) {
-                ContentResolver resolver = getContentResolver();
-
                 // Bulk insert
                 int num = resolver.bulkInsert(
                         RoumingContract.Pictures.CONTENT_URI,
                         values.toArray(new ContentValues[values.size()]));
                 Log.d(TAG, "Number of inserted items: " + Integer.toString(num));
+            } else {
+                status = false;
+            }
 
+            // Rouming jokes
+
+            // TODO
+
+            if (status) {
                 // Update time of last update
                 ContentValues mNewValues = new ContentValues();
                 mNewValues.put(Metadata.LAST_UPDATE, mUpdateStartTime);

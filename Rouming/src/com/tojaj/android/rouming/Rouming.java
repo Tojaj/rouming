@@ -27,6 +27,7 @@ public class Rouming {
     public final class RoumingConf {
         public static final String ROUMING_URL = "http://www.rouming.cz/";
         public static final String ROUMING_IMG_URL = "http://cdn.roumen.cz/kecy/";
+        public static final String ROUMING_JOKES_URL = "http://www.rouming.cz/roumingJokes.php";
     }
 
     public static class RoumingPictureHref {
@@ -128,8 +129,20 @@ public class Rouming {
 
     public static ArrayList<RoumingPictureHref> getRoumingPictureHrefs(
             Context context) {
-        String content = getRoumingPageContent(context, RoumingConf.ROUMING_URL);
+        String content = getPageContent(context, RoumingConf.ROUMING_URL);
         ArrayList<RoumingPictureHref> list = parseRoumingHtml(content);
+        return list;
+    }
+
+    public static ArrayList<RoumingJoke> getRoumingJokes(
+            Context context) {
+        return getRoumingJokes(context, 1);
+    }
+
+    public static ArrayList<RoumingJoke> getRoumingJokes(
+            Context context, long page) {
+        String content = getPageContent(context, RoumingConf.ROUMING_JOKES_URL + "?&page=" + String.valueOf(page));
+        ArrayList<RoumingJoke> list = parseRoumingJokesHtml(content);
         return list;
     }
 
@@ -187,14 +200,14 @@ public class Rouming {
         return content;
     }
 
-    public static String getRoumingPageContent(Context context, String pageUrl) {
+    public static String getPageContent(Context context, String pageUrl) {
         String content = null;
 
         URL url;
         try {
             url = new URL(pageUrl);
         } catch (MalformedURLException e) {
-            Log.e(TAG, "Cannot parse URL: " + RoumingConf.ROUMING_URL);
+            Log.e(TAG, "Cannot parse URL: " + pageUrl);
             return null;
         }
 
