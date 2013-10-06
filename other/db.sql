@@ -4,6 +4,8 @@ CREATE TABLE metadata (_id INTEGER PRIMARY KEY AUTOINCREMENT,last_update INTEGER
 
 CREATE TABLE pictures (_id INTEGER PRIMARY KEY AUTOINCREMENT,time INTEGER,name TEXT UNIQUE ON CONFLICT REPLACE,detail_url TEXT,picture_url TEXT,size INTEGER,likes INTEGER,dislikes INTEGER,comments INTEGER);
 
+CREATE TABLE jokes (_id INTEGER PRIMARY KEY AUTOINCREMENT,time INTEGER,name TEXT UNIQUE ON CONFLICT REPLACE,text TEXT,category, TEXT,grade INTEGER);
+
 /* Triggers */
 
 CREATE TRIGGER trigger_metadata_keep_only_one_line AFTER INSERT ON metadata BEGIN
@@ -11,7 +13,11 @@ CREATE TRIGGER trigger_metadata_keep_only_one_line AFTER INSERT ON metadata BEGI
 END;
 
 CREATE TRIGGER trigger_picutres_keep_limited_number_of_records AFTER INSERT ON pictures BEGIN
-     DELETE FROM pictures WHERE _id <= ((SELECT MAX(_id) FROM pictures) - 2);
+     DELETE FROM pictures WHERE _id <= ((SELECT MAX(_id) FROM pictures) - 1000);
+END;
+
+CREATE TRIGGER trigger_jokes_keep_limited_number_of_records AFTER INSERT ON jokes BEGIN
+     DELETE FROM jokes WHERE _id <= ((SELECT MAX(_id) FROM jokes) - 1000);
 END;
 
 /* Example data */

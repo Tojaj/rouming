@@ -2,10 +2,6 @@ package com.tojaj.android.rouming.provider;
 
 import java.util.Arrays;
 
-import com.tojaj.android.rouming.provider.RoumingContract.Metadata;
-import com.tojaj.android.rouming.provider.RoumingContract.Pictures;
-import com.tojaj.android.rouming.provider.RoumingDatabase.Tables;
-
 import android.content.ContentProvider;
 import android.content.ContentUris;
 import android.content.ContentValues;
@@ -19,6 +15,11 @@ import android.net.Uri;
 import android.text.TextUtils;
 import android.util.Log;
 
+import com.tojaj.android.rouming.provider.RoumingContract.Jokes;
+import com.tojaj.android.rouming.provider.RoumingContract.Metadata;
+import com.tojaj.android.rouming.provider.RoumingContract.Pictures;
+import com.tojaj.android.rouming.provider.RoumingDatabase.Tables;
+
 public class RoumingProvider extends ContentProvider {
     private static final String TAG = "RoumingProvider";
 
@@ -29,6 +30,8 @@ public class RoumingProvider extends ContentProvider {
     private static final int METADATA = 100;
     private static final int PICTURES = 200;
     private static final int PICTURES_ID = 201;
+    private static final int JOKES = 300;
+    private static final int JOKES_ID = 301;
 
     private static UriMatcher buildUriMatcher() {
         final UriMatcher matcher = new UriMatcher(UriMatcher.NO_MATCH);
@@ -37,6 +40,8 @@ public class RoumingProvider extends ContentProvider {
         matcher.addURI(authority, "metadata", METADATA);
         matcher.addURI(authority, "pictures", PICTURES);
         matcher.addURI(authority, "pictures/*", PICTURES_ID);
+        matcher.addURI(authority, "jokes", JOKES);
+        matcher.addURI(authority, "jokes/*", JOKES_ID);
 
         return matcher;
     }
@@ -64,6 +69,10 @@ public class RoumingProvider extends ContentProvider {
             return Pictures.CONTENT_TYPE;
         case PICTURES_ID:
             return Pictures.CONTENT_ITEM_TYPE;
+        case JOKES:
+            return Jokes.CONTENT_TYPE;
+        case JOKES_ID:
+            return Jokes.CONTENT_ITEM_TYPE;
 
         default:
             throw new UnsupportedOperationException("Unknown uri: " + uri);
@@ -94,6 +103,13 @@ public class RoumingProvider extends ContentProvider {
         case PICTURES:
             defaultSortOrder = Pictures.DEFAULT_SORT;
             builder.setTables(Tables.PICTURES);
+            break;
+        case JOKES_ID:
+            builder.appendWhere(RoumingContract.Jokes._ID + "="
+                    + uri.getLastPathSegment());
+        case JOKES:
+            defaultSortOrder = Jokes.DEFAULT_SORT;
+            builder.setTables(Tables.JOKES);
             break;
         default:
             throw new IllegalArgumentException("Unknown URI: " + uri);
@@ -127,6 +143,9 @@ public class RoumingProvider extends ContentProvider {
             break;
         case PICTURES:
             id = db.insert(Tables.PICTURES, null, values);
+            break;
+        case JOKES:
+            id = db.insert(Tables.JOKES, null, values);
             break;
         default:
             throw new IllegalArgumentException(
@@ -197,6 +216,41 @@ public class RoumingProvider extends ContentProvider {
                 db.endTransaction();
             }
             break;
+
+        case JOKES:
+            db.beginTransaction();
+            try {
+                // standard SQL insert statement, that can be reused
+                String statement_str = "insert into " + Tables.JOKES + "("
+                        + RoumingContract.Jokes.TIME + ","
+                        + RoumingContract.Jokes.NAME + ","
+                        + RoumingContract.Jokes.TEXT + ","
+                        + RoumingContract.Jokes.CATEGORY + ","
+                        + RoumingContract.Jokes.GRADE + ") values "
+                        + "(?,?,?,?,?);";
+                Log.d(TAG, "Compiling statement: " + statement_str);
+                SQLiteStatement insert = db.compileStatement(statement_str);
+
+                for (ContentValues value : values) {
+                    insert.bindLong(1,
+                            value.getAsLong(RoumingContract.Jokes.TIME));
+                    insert.bindString(2,
+                            value.getAsString(RoumingContract.Jokes.NAME));
+                    insert.bindString(3, value
+                            .getAsString(RoumingContract.Jokes.TEXT));
+                    insert.bindString(4, value
+                            .getAsString(RoumingContract.Jokes.CATEGORY));
+                    insert.bindLong(5,
+                            value.getAsLong(RoumingContract.Jokes.GRADE));
+                    long id = insert.executeInsert();
+                    Log.d(TAG, "Inserted id " + Long.toString(id));
+                }
+                db.setTransactionSuccessful();
+                numInserted = values.length;
+            } finally {
+                db.endTransaction();
+            }
+            break;
         default:
             throw new IllegalArgumentException(
                     "Unsupported URI for bulk insertion: " + uri);
@@ -224,6 +278,9 @@ public class RoumingProvider extends ContentProvider {
             return 1;
         }
 
+        String idStr;
+        String where;
+
         switch (sUriMatcher.match(uri)) {
         case METADATA:
             delCount = db.delete(Tables.METADATA, selection, selectionArgs);
@@ -232,12 +289,23 @@ public class RoumingProvider extends ContentProvider {
             delCount = db.delete(Tables.PICTURES, selection, selectionArgs);
             break;
         case PICTURES_ID:
-            String idStr = uri.getLastPathSegment();
-            String where = Pictures._ID + "=" + idStr;
+            idStr = uri.getLastPathSegment();
+            where = Pictures._ID + "=" + idStr;
             if (!TextUtils.isEmpty(selection)) {
                 where += " AND " + selection;
             }
             delCount = db.delete(Tables.PICTURES, where, selectionArgs);
+            break;
+        case JOKES:
+            delCount = db.delete(Tables.JOKES, selection, selectionArgs);
+            break;
+        case JOKES_ID:
+            idStr = uri.getLastPathSegment();
+            where = Jokes._ID + "=" + idStr;
+            if (!TextUtils.isEmpty(selection)) {
+                where += " AND " + selection;
+            }
+            delCount = db.delete(Tables.JOKES, where, selectionArgs);
             break;
         default:
             throw new IllegalArgumentException("Unsupported URI: " + uri);

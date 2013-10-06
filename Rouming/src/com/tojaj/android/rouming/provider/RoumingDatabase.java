@@ -1,33 +1,33 @@
 package com.tojaj.android.rouming.provider;
 
-import com.tojaj.android.rouming.provider.RoumingContract.MetadataColumns;
-import com.tojaj.android.rouming.provider.RoumingContract.PicturesColumns;
-
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.provider.BaseColumns;
 import android.util.Log;
 
+import com.tojaj.android.rouming.provider.RoumingContract.JokesColumns;
+import com.tojaj.android.rouming.provider.RoumingContract.MetadataColumns;
+import com.tojaj.android.rouming.provider.RoumingContract.PicturesColumns;
+
 public class RoumingDatabase extends SQLiteOpenHelper {
     private static final String TAG = "RoumingDatabase";
 
     private static final String DATABASE_NAME = "rouming.db";
 
-    private static final int DATABASE_VERSION = 1;
+    private static final int DATABASE_VERSION = 2;
 
     private static final String PICTURES_ROWS_TO_KEEP = "1000";
-
-    // private final Context mContext;
+    private static final String JOKES_ROWS_TO_KEEP = "1000";
 
     interface Tables {
         String METADATA = RoumingContract.PATH_METADATA;
         String PICTURES = RoumingContract.PATH_PICTURES;
+        String JOKES = RoumingContract.PATH_JOKES;
     }
 
     RoumingDatabase(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
-        // mContext = context;
     }
 
     @Override
@@ -38,21 +38,32 @@ public class RoumingDatabase extends SQLiteOpenHelper {
 
         // Tables
 
-        sql = "CREATE TABLE " + Tables.METADATA + " (" + BaseColumns._ID
-                + " INTEGER PRIMARY KEY AUTOINCREMENT,"
-                + MetadataColumns.LAST_UPDATE + " INTEGER)";
+        sql = "CREATE TABLE " + Tables.METADATA + " (" +
+                BaseColumns._ID + " INTEGER PRIMARY KEY AUTOINCREMENT," +
+                MetadataColumns.LAST_UPDATE + " INTEGER)";
         db.execSQL(sql);
         Log.d(TAG, "SQL Executed: " + sql);
 
-        sql = "CREATE TABLE " + Tables.PICTURES + " (" + BaseColumns._ID
-                + " INTEGER PRIMARY KEY AUTOINCREMENT," + PicturesColumns.TIME
-                + " INTEGER," + PicturesColumns.NAME
-                + " TEXT UNIQUE ON CONFLICT REPLACE,"
-                + PicturesColumns.DETAIL_URL + " TEXT,"
-                + PicturesColumns.PICTURE_URL + " TEXT," + PicturesColumns.SIZE
-                + " INTEGER," + PicturesColumns.LIKES + " INTEGER,"
-                + PicturesColumns.DISLIKES + " INTEGER,"
-                + PicturesColumns.COMMENTS + " INTEGER)";
+        sql = "CREATE TABLE " + Tables.PICTURES + " (" +
+                BaseColumns._ID + " INTEGER PRIMARY KEY AUTOINCREMENT," +
+                PicturesColumns.TIME + " INTEGER," +
+                PicturesColumns.NAME + " TEXT UNIQUE ON CONFLICT REPLACE," +
+                PicturesColumns.DETAIL_URL + " TEXT," +
+                PicturesColumns.PICTURE_URL + " TEXT," +
+                PicturesColumns.SIZE + " INTEGER," +
+                PicturesColumns.LIKES + " INTEGER," +
+                PicturesColumns.DISLIKES + " INTEGER," +
+                PicturesColumns.COMMENTS + " INTEGER)";
+        db.execSQL(sql);
+        Log.d(TAG, "SQL Executed: " + sql);
+
+        sql = "CREATE TABLE " + Tables.JOKES + " (" +
+                BaseColumns._ID + " INTEGER PRIMARY KEY AUTOINCREMENT," +
+                JokesColumns.TIME + " INTEGER," +
+                JokesColumns.NAME + " TEXT UNIQUE ON CONFLICT REPLACE," +
+                JokesColumns.TEXT + " TEXT," +
+                JokesColumns.CATEGORY + " TEXT," +
+                JokesColumns.GRADE + " INTEGER)";
         db.execSQL(sql);
         Log.d(TAG, "SQL Executed: " + sql);
 
@@ -73,6 +84,14 @@ public class RoumingDatabase extends SQLiteOpenHelper {
                 + PICTURES_ROWS_TO_KEEP + ");" + "END;";
         db.execSQL(sql);
         Log.d(TAG, "SQL Executed: " + sql);
+
+        sql = "CREATE TRIGGER trigger_jokes_keep_limited_number_of_records "
+                + "AFTER INSERT ON jokes BEGIN "
+                + "DELETE FROM jokes WHERE "
+                + "_id < ((SELECT MAX(_id) FROM jokes) - "
+                + JOKES_ROWS_TO_KEEP + ");" + "END;";
+        db.execSQL(sql);
+        Log.d(TAG, "SQL Executed: " + sql);
     }
 
     @Override
@@ -80,6 +99,7 @@ public class RoumingDatabase extends SQLiteOpenHelper {
         Log.d(TAG, "Upgrading database " + DATABASE_NAME);
         db.execSQL("DROP TABLE IF EXISTS " + Tables.METADATA);
         db.execSQL("DROP TABLE IF EXISTS " + Tables.PICTURES);
+        db.execSQL("DROP TABLE IF EXISTS " + Tables.JOKES);
         onCreate(db);
     }
 
