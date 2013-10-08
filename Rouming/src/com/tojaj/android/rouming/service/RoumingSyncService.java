@@ -26,6 +26,7 @@ import com.tojaj.android.rouming.Rouming;
 import com.tojaj.android.rouming.Rouming.RoumingJoke;
 import com.tojaj.android.rouming.Rouming.RoumingPictureHref;
 import com.tojaj.android.rouming.provider.RoumingContract;
+import com.tojaj.android.rouming.provider.RoumingContract.Jokes;
 import com.tojaj.android.rouming.provider.RoumingContract.Metadata;
 import com.tojaj.android.rouming.provider.RoumingContract.Pictures;
 
@@ -245,13 +246,15 @@ public class RoumingSyncService extends IntentService {
 
         @Override
         protected void onPostExecute(Void none) {
-            boolean status = true;
+            boolean roumingPicturesHrefStatus = true;
+            boolean roumingJokesStatus = true;
+
             ArrayList<ContentValues> values;
             ContentResolver resolver = getContentResolver();
 
             // Rouming pictures
 
-            values = new ArrayList<ContentValues>();
+            values.clear();
             for (RoumingPictureHref href : mRoumingPictureHrefs) {
                 Log.d(TAG, "Url: " + href.pic_url);
                 ContentValues newValues = new ContentValues();
@@ -275,14 +278,39 @@ public class RoumingSyncService extends IntentService {
                         values.toArray(new ContentValues[values.size()]));
                 Log.d(TAG, "Number of inserted items: " + Integer.toString(num));
             } else {
-                status = false;
+                roumingJokesStatus = false;
             }
 
             // Rouming jokes
 
-            // TODO
+            values = new ArrayList<ContentValues>();
+            for (RoumingJoke joke : mRoumingJokes) {
+                Log.d(TAG, "Joke: " + joke.name);
+                ContentValues newValues = new ContentValues();
 
-            if (status) {
+                newValues.put(Jokes.TIME, joke.unixtime);
+                newValues.put(Jokes.NAME, joke.name);
+                newValues.put(Jokes.TEXT, joke.text);
+                newValues.put(Jokes.CATEGORY, joke.category;
+                newValues.put(Jokes.GRADE, joke.grade);
+
+                values.add(newValues);
+            }
+
+            if (values.size() > 0) {
+                // Bulk insert
+                int num = resolver.bulkInsert(
+                        RoumingContract.Jokes.CONTENT_URI,
+                        values.toArray(new ContentValues[values.size()]));
+                Log.d(TAG, "Number of inserted jokes: " + Integer.toString(num));
+            } else {
+                roumingPicturesHrefStatus = false;
+            }
+
+            // Check status
+
+            if (roumingPicturesHrefStatus || roumingJokesStatus) {
+                // If at least update of one table was success
                 // Update time of last update
                 ContentValues mNewValues = new ContentValues();
                 mNewValues.put(Metadata.LAST_UPDATE, mUpdateStartTime);

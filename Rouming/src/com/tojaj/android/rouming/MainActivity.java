@@ -3,6 +3,8 @@ package com.tojaj.android.rouming;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 
+import uk.co.senab.actionbarpulltorefresh.library.PullToRefreshAttacher;
+
 import com.tojaj.android.rouming.R;
 import com.tojaj.android.rouming.service.RoumingSyncService;
 
@@ -32,7 +34,7 @@ public class MainActivity extends FragmentActivity implements
 
     static final String TAG = "ROUMING-OBRAZKY";
 
-    private boolean two_pane_layout = false;
+    private final boolean two_pane_layout = false;
 
     private DrawerLayout mDrawerLayout;
     private ListView mDrawerList;
@@ -42,9 +44,9 @@ public class MainActivity extends FragmentActivity implements
     private CharSequence mTitle;
 
     private class DrawerMenuItem {
-        private String mName;
-        private Class<?> mFragmentClass;
-        private String mFragmentId;
+        private final String mName;
+        private final Class<?> mFragmentClass;
+        private final String mFragmentId;
 
         public DrawerMenuItem(String name, Class<?> fragmentClass,
                 String fragmentId) {
@@ -53,6 +55,7 @@ public class MainActivity extends FragmentActivity implements
             this.mFragmentId = fragmentId;
         }
 
+        @Override
         public String toString() {
             return mName;
         }
@@ -92,11 +95,15 @@ public class MainActivity extends FragmentActivity implements
 
     private PictureFragment mPictureFragment;
 
+    private PullToRefreshAttacher mPullToRefreshAttacher;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
         setContentView(R.layout.activity_main);
+
+        mPullToRefreshAttacher = PullToRefreshAttacher.get(this);
 
         // Check whether the activity is using two pane layout
         // TODO
@@ -139,12 +146,14 @@ public class MainActivity extends FragmentActivity implements
                 R.string.drawer_close // "close drawer" description for
                                       // accessibility
         ) {
+            @Override
             public void onDrawerClosed(View view) {
                 getActionBar().setTitle(mTitle);
                 invalidateOptionsMenu(); // creates call to
                                          // onPrepareOptionsMenu()
             }
 
+            @Override
             public void onDrawerOpened(View drawerView) {
                 getActionBar().setTitle(mDrawerTitle);
                 invalidateOptionsMenu(); // creates call to
@@ -207,6 +216,14 @@ public class MainActivity extends FragmentActivity implements
         Intent intent = new Intent(this, RoumingSyncService.class);
         intent.putExtra(RoumingSyncService.EXTRA_FORCE_SYNC, true);
         startService(intent);
+    }
+
+    /*
+     * Pull-to-refresh
+     */
+
+    PullToRefreshAttacher getPullToRefreshAttacher() {
+        return mPullToRefreshAttacher;
     }
 
     /*

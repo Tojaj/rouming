@@ -2,6 +2,8 @@ package com.tojaj.android.rouming;
 
 import java.io.File;
 
+import uk.co.senab.actionbarpulltorefresh.library.PullToRefreshAttacher;
+
 import com.nostra13.universalimageloader.cache.disc.DiscCacheAware;
 import com.nostra13.universalimageloader.core.ImageLoader;
 import com.nostra13.universalimageloader.core.assist.DiscCacheUtil;
@@ -11,6 +13,7 @@ import android.app.Activity;
 import android.content.Context;
 import android.database.Cursor;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.app.ListFragment;
 import android.util.Log;
@@ -26,7 +29,8 @@ import android.content.Loader;
 import android.widget.CursorAdapter;
 
 public class PicturesFragment extends ListFragment implements
-        LoaderManager.LoaderCallbacks<Cursor> {
+        LoaderManager.LoaderCallbacks<Cursor>,
+        PullToRefreshAttacher.OnRefreshListener {
 
     static final String TAG = "PicturesFragment";
     private static final int PICTURES_LOADER = 0;
@@ -34,6 +38,7 @@ public class PicturesFragment extends ListFragment implements
     OnPictureClickedListener listener;
     RoumingPicturesCursorAdapter mAdapter;
     protected ImageLoader imageLoader = ImageLoader.getInstance();
+    private PullToRefreshAttacher mPullToRefreshAttacher;
 
     /*
      * Interface(s) required by this activity
@@ -77,6 +82,25 @@ public class PicturesFragment extends ListFragment implements
         mAdapter = new RoumingPicturesCursorAdapter(getActivity(), null);
         setListAdapter(mAdapter);
         getLoaderManager().initLoader(PICTURES_LOADER, null, this);
+    }
+
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+            Bundle savedInstanceState) {
+        View v = super.onCreateView(inflater, container, savedInstanceState);
+
+        // Get View for which the user will scroll…
+        View scrollableView = v.findViewById(android.R.id.list);
+
+        // Now get the PullToRefresh attacher from the Activity. An exercise to the reader
+        // is to create an implicit interface instead of casting to the concrete Activity
+        MainActivity activity = (MainActivity) getActivity();
+        mPullToRefreshAttacher = (activity.getPullToRefreshAttacher());
+
+        // Now set the ScrollView as the refreshable view, and the refresh listener (this)
+        mPullToRefreshAttacher.addRefreshableView(scrollableView, this);
+
+        return v;
     }
 
     @Override
@@ -151,7 +175,7 @@ public class PicturesFragment extends ListFragment implements
             /*
              * imageLoader.loadImage(rouming_picture_href.pic_url.toString(),
              * new SimpleImageLoadingListener() {
-             * 
+             *
              * @Override public void onLoadingComplete(String imageUri, View
              * view, Bitmap loadedImage) { // Do whatever you want with Bitmap
              * holder.imageView.setImageBitmap(loadedImage); } });
@@ -223,4 +247,35 @@ public class PicturesFragment extends ListFragment implements
         mAdapter.changeCursor(null);
     }
 
+
+    /*
+     * PullToRefresh
+     */
+
+    @Override
+    public void onRefreshStarted(View view) {
+        /**
+         * Simulate Refresh with 4 seconds sleep
+         */
+        new AsyncTask<Void, Void, Void>() {
+
+            @Override
+            protected Void doInBackground(Void... params) {
+                try {
+                    Thread.sleep(4000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                return null;
+            }
+
+            @Override
+            protected void onPostExecute(Void result) {
+                super.onPostExecute(result);
+
+                // Notify PullToRefreshAttacher that the refresh has finished
+                mPullToRefreshAttacher.setRefreshComplete();
+            }
+        }.execute();
+    }
 }
